@@ -67,24 +67,31 @@ class Code:
             "JMP": "111",
         }
         return switcher.get(str, "000")
+    
+    @staticmethod
+    def decimal_to_15_bit_str(decimal_str):
+        binary_str = bin(int(decimal_str))[2:]
+        return binary_str.zfill(15)
 
 class CommandType(Enum):
     A_COMMAND = 0
     C_COMMAND = 1
     L_COMMAND = 2
 
+
 class Parser:
     def __init__(self, path): 
         self.file_lines = [line.rstrip("\n\r ") for line in open(path, "r").readlines()]
-        self.line_iter = more_itertools.peekable(iter(self.file_lines))          
+        # Strip comment lines
+        self.file_lines = [line for line in self.file_lines if not line.startswith("//")]  
+        # Strip empty lines
+        self.file_lines = [line for line in self.file_lines if line != ""]
+        self.line_iter = iter(self.file_lines)          
         self.actual_line = None
         self.advance() # Advance to first command. If file is empty, this will set actual_line to None
     
     def has_more_commands(self) -> bool:
-        try:
-            return self.line_iter.peek() is not None
-        except StopIteration:
-            return False
+        return self.actual_line != None and self.actual_line != ""
     
     def advance(self) -> None:
         try:
@@ -115,27 +122,45 @@ class Parser:
         return self.actual_line.split("=")[0]
         
     def comp(self) -> str:
-        return self.actual_line.split("=")[1]
-    
+        try:
+            return self.actual_line.split("=")[1]
+        except IndexError:
+            return "null"
+
     def jump(self) -> str:
-        return self.actual_line.split(";")[1]        
+        try:
+            return self.actual_line.split(";")[1]   
+        except IndexError:
+            return "null"
     
+class Assembler:
+    def assemble(parser: Parser):
+        assembly = []
+        while parser.has_more_commands():
+            if parser.command_type() == CommandType.A_COMMAND:
+                assembly.append("0" + parser.symbol() + "\n")
+            elif parser.command_type() == CommandType.C_COMMAND:
+                assembly.append("111" + Code.comp(parser.comp()) + Code.dest(parser.dest) + Code.jump(parser.jump()) + "\n")
+            else:
+                raise Exception("Command type is not A_COMMAND, C_COMMAND or L_COMMAND")
+            parser.advance()
+        return assembly
     
-        
 def main():
     if len(sys.argv) < 2:
         print("Please provide a filename/path as a parameter.")
         return
 
-    filepath = sys.argv[1]
+    filepath = sys.argv[0].rstrip("assembler.py")
+    filename = sys.argv[1]
     
-    p = Parser(filepath)
+    p = Parser(filepath + filename)
+    f = filename[:-4]
     
-    while p.has_more_commands():
-        print(p.actual_line)
-        p.advance()
+    output_filename = f + ".hack"
     
+    a = Assembler.assemble(p)
+    print(a)
     
-
 if __name__ == "__main__":
     main()

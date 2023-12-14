@@ -46,14 +46,24 @@ def test_parser_symbol_multiple_a_commands():
 def test_parser_symbol_multiple_a_commands_check_end():
     # GIVEN a parser with 3 A_COMMANDs
     parser = Parser("tests\\test_files\\test_a_com_3.n2t")
-    # WHEN advance is called 2 times
+    # WHEN advance is called 3 times
     parser.advance()
+    parser.advance()   
     parser.advance()   
     # THEN has_more_commands returns False
     assert parser.has_more_commands() == False
     
+def test_parser_symbol_multiple_a_commands_check_end():
+    # GIVEN a parser with 3 A_COMMANDs
+    parser = Parser("tests\\test_files\\test_a_com_3.n2t")
+    # WHEN advance is called 2 times
+    parser.advance()
+    parser.advance()   
+    # THEN has_more_commands returns True   
+    assert parser.has_more_commands() == True
+    
 def test_c_command_mnemonic_dest():
-    # GIVEN a parser with a C_COMMAND
+    # GIVEN a parser with a dest C_COMMAND
     parser = Parser("tests\\test_files\\test_c_com_1.n2t")
     # WHEN dest is called
     dest = parser.dest()
@@ -61,12 +71,32 @@ def test_c_command_mnemonic_dest():
     assert dest == "M"
         
 def test_c_command_mnemonic_comp():
-    # GIVEN a parser with a C_COMMAND
+    # GIVEN a parser with a comp C_COMMAND
     parser = Parser("tests\\test_files\\test_c_com_1.n2t")
     # WHEN dest is called
     dest = parser.comp()
     # THEN dest returns the expected value
     assert dest == "D+1"
+    
+def test_c_command_mnemonic_jump_without_command():
+    # GIVEN a parser without a jump C_COMMAND
+    parser = Parser("tests\\test_files\\test_c_com_1.n2t")
+    # WHEN jump is called
+    jump = parser.jump()
+    # THEN jump returns the expected value
+    assert jump == "null"
+    
+def test_c_command_mnemonic_comp_without_command():
+    # GIVEN a parser with a comp C_COMMAND in line 5
+    parser = Parser("tests\\test_files\\assembler_test.n2t")
+    parser.advance()
+    parser.advance()
+    parser.advance()
+    parser.advance()
+    # WHEN comp is called
+    comp = parser.comp()
+    # THEN comp returns the expected value
+    assert comp == "null"
     
 def test_c_command_mnemonic_jump_in_line_4():
     # GIVEN a parser with a C_COMMAND, JMP in line 4
@@ -79,6 +109,48 @@ def test_c_command_mnemonic_jump_in_line_4():
     # THEN dest returns the expected value
     assert jmp == "JGT"
     
+
+### COMMENT TESTS ###
+
+def test_comments_with_one_command():
+    # GIVEN a parser with a one command and a few comments
+    parser = Parser("tests\\test_files\\comments.n2t")
+    # WHEN checking for the symbol
+    symbol = parser.symbol()
+    # THEN symbol returns the expected value
+    assert symbol == "32"
+    
+def test_only_comments():
+    # GIVEN a parser with only comments
+    parser = Parser("tests\\test_files\\comments_only.n2t")
+    # WHEN checking if there are more commands
+    has_more_commands = parser.has_more_commands()
+    # THEN has_more_commands returns False
+    assert has_more_commands == False
+    
+def test_reading_full_code_piece():
+    # GIVEN a parser with a full code piece
+    parser = Parser("tests\\test_files\\full_code_piece.n2t")
+    # WHEN checking if there are more commands and advancing
+    while parser.has_more_commands():
+        parser.advance()
+    #THEN no exception is raised
+    
+def test_reading_full_code_pieces_commands():
+    # GIVEN a parser with a full code piece
+    parser = Parser("tests\\test_files\\full_code_piece.n2t")
+    # WHEN checking if there are more commands and advancing with calling the expected methods
+    while parser.has_more_commands():
+        if parser.command_type() == CommandType.C_COMMAND:
+            parser.comp()
+            parser.dest()
+            parser.jump()
+        elif parser.command_type() == CommandType.A_COMMAND:
+            parser.symbol()
+        parser.advance()
+    #THEN no exception is raised
+
+
 @pytest.mark.skip(reason="Skipping test_parser_symbol_l_command")
 def test_parser_symbol_invalid_command():
     # GIVEN a parser with an invalid command type
@@ -120,7 +192,7 @@ def test_has_more_commands_with_no_more_commands_than_the_current():
     # WHEN has_more_commands is called
     has_more_commands = parser.has_more_commands()
     # THEN has_more_commands returns True
-    assert has_more_commands == False
+    assert has_more_commands == True
     
 def test_has_more_commands_with_more_commands_than_the_current():
     # GIVEN a parser with more commands
