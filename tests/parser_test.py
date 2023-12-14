@@ -19,6 +19,8 @@ def test_parser_command_type_c_command():
     # THEN command_type returns C_COMMAND
     assert command_type == CommandType.C_COMMAND
 
+### SYMBOL TESTS ###
+
 def test_parser_symbol_a_command():
     # GIVEN a parser with an A_COMMAND
     parser = Parser("tests\\test_files\\test_a_com_1.n2t")
@@ -28,7 +30,7 @@ def test_parser_symbol_a_command():
     assert symbol == "32"
     
 def test_parser_symbol_multiple_a_commands():
-    # GIVEN a parser with an A_COMMAND
+    # GIVEN a parser with three A_COMMANDs
     parser = Parser("tests\\test_files\\test_a_com_3.n2t")
     # WHEN symbol is called
     symbol = parser.symbol()
@@ -41,18 +43,41 @@ def test_parser_symbol_multiple_a_commands():
     symbol = parser.symbol()
     assert symbol == "34"
 
-@pytest.mark.skip(reason="Skipping test_parser_symbol_multiple_a_commands_check_end")
 def test_parser_symbol_multiple_a_commands_check_end():
-    # GIVEN a parser with an A_COMMAND
+    # GIVEN a parser with 3 A_COMMANDs
     parser = Parser("tests\\test_files\\test_a_com_3.n2t")
-    # WHEN advance is called 4 times
+    # WHEN advance is called 2 times
     parser.advance()
-    parser.advance()
- #   parser.advance()
- #   parser.advance()    
+    parser.advance()   
     # THEN has_more_commands returns False
     assert parser.has_more_commands() == False
+    
+def test_c_command_mnemonic_dest():
+    # GIVEN a parser with a C_COMMAND
+    parser = Parser("tests\\test_files\\test_c_com_1.n2t")
+    # WHEN dest is called
+    dest = parser.dest()
+    # THEN dest returns the expected value
+    assert dest == "M"
         
+def test_c_command_mnemonic_comp():
+    # GIVEN a parser with a C_COMMAND
+    parser = Parser("tests\\test_files\\test_c_com_1.n2t")
+    # WHEN dest is called
+    dest = parser.comp()
+    # THEN dest returns the expected value
+    assert dest == "D+1"
+    
+def test_c_command_mnemonic_jump_in_line_4():
+    # GIVEN a parser with a C_COMMAND, JMP in line 4
+    parser = Parser("tests\\test_files\\test_c_com_all.n2t")
+    # WHEN setting to line 4 and dest is called
+    parser.advance()
+    parser.advance()
+    parser.advance()
+    jmp = parser.jump()
+    # THEN dest returns the expected value
+    assert jmp == "JGT"
     
 @pytest.mark.skip(reason="Skipping test_parser_symbol_l_command")
 def test_parser_symbol_invalid_command():
@@ -63,7 +88,6 @@ def test_parser_symbol_invalid_command():
     with pytest.raises(Exception):
         symbol = parser.symbol()    
 
-    
     
 
 ### INIT AND FILE HANDLING TESTS ###
